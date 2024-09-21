@@ -37,11 +37,11 @@ class Train:
         if passenger.arrival_time > self.current_time:
             return
         
-        # checks train capacity
+        # checks train capacity and passenger type
         half_capacity = self.capacity / 2
         if len(self.passengers) < self.capacity:
             if passenger.p_type == 'B' and len(self.passengers) > half_capacity:
-                return False  # Skip type B passengers if train is more than half full.
+                return False
             self.passengers.append(passenger)
             return True
         return False
@@ -71,7 +71,7 @@ class Station:
         # filter passengers by arrival time
         ready_passengers = [p for p in self.waiting_passengers if p.arrival_time <= train.current_time]
 
-        # sort passengers by distance to destination
+        # sort passengers by distance to destination and type
         ready_passengers.sort(
             key=lambda p: (-abs(p.destination - train.current_station), p.p_type), 
             reverse=False 
@@ -89,8 +89,7 @@ class TrainSimulation:
         self.travel_time = travel_time                  # train travel time
         self.train_frequency = train_frequency          # train frequency (time between trains)
         self.train_capacity = train_capacity            # max number of passengers each train can hold
-        self.stations = [Station(i) for                 # create station objects with id corresponding to its position
-                          i in range(1, num_stations + 1)]
+        self.stations = stations                        # train station with corresponding created id
         self.passengers = passengers                    # list of passengers in the simulation
         self.trains = []                                # list to keep track of trains
         self.time = 0                                   # current simulation time
@@ -149,7 +148,7 @@ def read_input(file_path):
         # initialize passengers and stations list
         passengers = []
         passenger_id = 1
-        stations = [Station(i) for i in range(1, num_stations + 1)]  # Define local stations list
+        stations = [Station(i) for i in range(1, num_stations + 1)]
 
         # reads next lines -> passenger type, arrival time, destination, starting station
         for line in file:
@@ -171,7 +170,7 @@ def read_input(file_path):
 if __name__ == "__main__":
     # check for correct number of command-line arguments
     if len(sys.argv) != 2:
-        print("format: python train.py <input_file>")
+        print("Format: `python RailwaySimulator.py Example#.txt`")
         sys.exit(1)
 
     # read input data from the specified file
