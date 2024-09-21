@@ -26,7 +26,7 @@ class Train:
             self.current_station -= 1
 
     def board(self, passenger):
-        # adds passenger based on conditions
+        # checks passenger's conditions
 
         # checks passenger's destination and current station
         if (self.direction == 1 and passenger.destination < self.current_station) or \
@@ -38,10 +38,13 @@ class Train:
             return
         
         # checks train capacity
+        half_capacity = self.capacity / 2
         if len(self.passengers) < self.capacity:
+            if passenger.p_type == 'B' and len(self.passengers) > half_capacity:
+                return False  # Skip type B passengers if train is more than half full.
             self.passengers.append(passenger)
-        else:
-            pass
+            return True
+        return False
 
     def disembark(self):
         # removes passenger if they have arrived at destination
@@ -63,30 +66,19 @@ class Station:
         self.waiting_passengers.append(passenger)
 
     def board_passengers(self, train):
-        # board passenger based on conditions
+        # board passengers
 
         # filter passengers by arrival time
         ready_passengers = [p for p in self.waiting_passengers if p.arrival_time <= train.current_time]
 
         # sort passengers by distance to destination
         ready_passengers.sort(
-            key=lambda p: (-abs(p.destination - train.current_station), p.p_type),  # Negative for descending distance
-            reverse=False  # Keep this as False
+            key=lambda p: (-abs(p.destination - train.current_station), p.p_type), 
+            reverse=False 
         )
 
-        # determine if capacity is half full
-        half_capacity = train.capacity / 2
-
-        # board based on type [capacity] and destiation
-        successful_boardings = []
-        for passenger in ready_passengers:
-            if len(train.passengers) < train.capacity:
-                if passenger.p_type == 'B' and len(train.passengers) > half_capacity:
-                    continue  # skip to next passenger
-                if (train.direction == 1 and passenger.destination > train.current_station) or \
-                (train.direction == -1 and passenger.destination < train.current_station):
-                    successful_boardings.append(passenger) 
-                    train.board(passenger)
+        # board based on conditions
+        successful_boardings = [p for p in ready_passengers if train.board(p)]
 
         # remove only passengers that boarded
         self.waiting_passengers = [p for p in self.waiting_passengers if p not in successful_boardings]
@@ -107,10 +99,10 @@ class TrainSimulation:
         self.finished_passengers = []                   # list to track passengers who have completed their journey
 
     def spawn_train(self):
-        # two trains spawn: at station 1 and last station
+        # two trains spawn: station 1 and last station
         if self.time % self.train_frequency == 0 and self.time >= self.last_train_time + self.train_frequency:
-            self.trains.append(Train(self.next_train_id, 1, 1, self.train_capacity, self.num_stations))
-            self.trains.append(Train(self.next_train_id + 1, self.num_stations, -1, self.train_capacity, self.num_stations))
+            for train_id, start_station, direction in [(self.next_train_id, 1, 1), (self.next_train_id + 1, self.num_stations, -1)]:
+                self.trains.append(Train(train_id, start_station, direction, self.train_capacity, self.num_stations))
             self.next_train_id += 2
             self.last_train_time = self.time
 
